@@ -2,7 +2,7 @@ package com.drawsync.backend.controller;
 
 import com.drawsync.backend.model.Room;
 import com.drawsync.backend.repository.RoomRepository;
-import com.drawsync.backend.repository.UserRepository; // ✅ Added Import
+import com.drawsync.backend.repository.UserRepository;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ public class SocketController {
     private RoomRepository roomRepository;
 
     @Autowired
-    private UserRepository userRepository; // ✅ Added Dependency Injector
+    private UserRepository userRepository;
 
     @MessageMapping("/board")
     public void handleBoardUpdate(java.util.Map<String, Object> payload) {
@@ -65,14 +65,13 @@ public class SocketController {
 
         String userEmail = principal != null ? principal.getName() : "Anonymous";
 
-        // ✅ FIXED: Look up your real name (e.g., "Yash Keshao Dabhekar") from the Database
         String fullName = userRepository.findByEmail(userEmail)
                 .map(com.drawsync.backend.model.User::getFullName)
                 .orElse(userEmail.split("@")[0]);
 
         java.util.Map<String, Object> currentUser = new java.util.HashMap<>();
         currentUser.put("userId", userEmail);
-        currentUser.put("name", fullName); // ✅ Uses real name instead of just email split snippet
+        currentUser.put("name", fullName);
 
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         response.put("type", "JOINED");
@@ -101,7 +100,8 @@ public class SocketController {
         String roomId = (String) payload.get("roomId");
         Object messageData = payload.get("message"); // Extracts text, userName, userId
 
-        System.out.println("Broad0casting message to room: " + roomId);
+        System.out.println("" +
+                "Broad0casting message to room: " + roomId);
 
         messagingTemplate.convertAndSend(
                 "/topic/chat/" + roomId,

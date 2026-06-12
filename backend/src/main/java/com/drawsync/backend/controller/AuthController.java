@@ -24,12 +24,17 @@ public class AuthController {
     public Map<String, Object> signup(@RequestBody User user) {
         User savedUser = userService.register(user);
 
-        String token = jwtService.generateToken(savedUser.getEmail());
+        // ✅ FIX: Extract the first role name string from the Set collection safely
+        String roleStr = savedUser.getRoles().stream()
+                .map(Enum::name)
+                .findFirst()
+                .orElse("EDITOR");
+
+        String token = jwtService.generateToken(savedUser.getEmail(), roleStr);
 
         Map<String, Object> response = new HashMap<>();
         response.put("token", token);
         response.put("user", savedUser);
-
         return response;
     }
 
@@ -37,15 +42,19 @@ public class AuthController {
     public Map<String, Object> login(@RequestBody User user) {
         User existingUser = userService.login(user.getEmail(), user.getPassword());
 
-        String token = jwtService.generateToken(existingUser.getEmail());
+        // ✅ FIX: Extract the first role name string from the Set collection safely
+        String roleStr = existingUser.getRoles().stream()
+                .map(Enum::name)
+                .findFirst()
+                .orElse("EDITOR");
+
+        String token = jwtService.generateToken(existingUser.getEmail(), roleStr);
 
         Map<String, Object> response = new HashMap<>();
         response.put("token", token);
         response.put("user", existingUser);
-
         return response;
     }
-
     @GetMapping("/test")
     public String test(HttpServletRequest request) {
         return "User: " + request.getAttribute("userEmail");

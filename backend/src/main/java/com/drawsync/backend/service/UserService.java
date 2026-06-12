@@ -1,5 +1,6 @@
 package com.drawsync.backend.service;
 
+import com.drawsync.backend.model.Role;
 import com.drawsync.backend.model.User;
 import com.drawsync.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,13 @@ public class UserService {
 
     public User register(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // ✅ FIX: Check if the collection set is null or empty, then add the default role
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            user.setRoles(new java.util.HashSet<>());
+            user.getRoles().add(Role.EDITOR);
+        }
+
         return userRepository.save(user);
     }
 
