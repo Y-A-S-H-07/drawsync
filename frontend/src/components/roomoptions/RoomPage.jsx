@@ -43,7 +43,7 @@ function RoomPage() {
       client.subscribe("/topic/room/" + roomId, (msg) => {
 
         const data = JSON.parse(msg.body);
-        console.log("Received:", data);
+        console.log("JOIN DATA =", JSON.stringify(data, null, 2));
 
         if (data.type === "ERROR") {
           alert("This room does not exist! Redirecting you back home...");
@@ -53,12 +53,19 @@ function RoomPage() {
           return;
         }
 
-        if (data.type === "JOINED") {
+       if (data.type === "JOINED") {
           setMembers(data.users || []);
-          setCurrentUser(data.currentUser);
           setHostName(data.host);
           setInitialBoard(data.boardData);
+
+          const loggedInUser = JSON.parse(localStorage.getItem("userDetails"));
+
+          setCurrentUser({
+            userId: loggedInUser.email,
+            name: loggedInUser.fullName || loggedInUser.name
+          });
         }
+        
         
 
         if (data.type === "USER_JOINED") {
@@ -257,6 +264,9 @@ function ChatBox({ roomId, currentUser }) {
     
     const subscription = client.subscribe("/topic/chat/" + roomId, (msg) => {
       const message = JSON.parse(msg.body);
+
+      console.log("Received Chat:", message);
+
       setMessages((prev) => [...prev, message]);
     });
 
@@ -277,6 +287,8 @@ function ChatBox({ roomId, currentUser }) {
       userId: currentUser.userId,
       createdAt: new Date().toISOString()
     };
+    console.log("Current User:", currentUser);
+    console.log("Message:", message);
 
     getStompClient().publish({
       destination: "/app/chat",

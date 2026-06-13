@@ -21,7 +21,7 @@ public class Room {
     private String roomId; // like ABC123
 
     private String hostEmail;
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private java.util.List<UserInfo> users = new java.util.ArrayList<>();
 
     private boolean isActive = true;

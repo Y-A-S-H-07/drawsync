@@ -1,6 +1,7 @@
 package com.drawsync.backend.controller;
 
 import com.drawsync.backend.model.Room;
+import com.drawsync.backend.model.UserInfo;
 import com.drawsync.backend.repository.RoomRepository;
 import com.drawsync.backend.repository.UserRepository;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -69,6 +70,20 @@ public class SocketController {
                 .map(com.drawsync.backend.model.User::getFullName)
                 .orElse(userEmail.split("@")[0]);
 
+        boolean exists = room.getUsers().stream()
+                .anyMatch(u -> u.getEmail().equals(userEmail));
+
+        if (!exists) {
+            room.getUsers().add(
+                    new UserInfo(
+                            userEmail,
+                            fullName,
+                            ""
+                    )
+            );
+
+            roomRepository.save(room);
+        }
         java.util.Map<String, Object> currentUser = new java.util.HashMap<>();
         currentUser.put("userId", userEmail);
         currentUser.put("name", fullName);
@@ -76,7 +91,17 @@ public class SocketController {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         response.put("type", "JOINED");
         response.put("currentUser", currentUser);
-        response.put("users", java.util.List.of(currentUser));
+        java.util.List<java.util.Map<String, Object>> users = room.getUsers()
+                .stream()
+                .map(u -> {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("userId", u.getEmail());
+                    map.put("name", u.getName());
+                    return map;
+                })
+                .toList();
+        System.out.println("ROOM USERS COUNT = " + room.getUsers().size());
+        response.put("users", users);
         response.put("host", room.getHostEmail());
         response.put("boardData", room.getBoardData());
 
