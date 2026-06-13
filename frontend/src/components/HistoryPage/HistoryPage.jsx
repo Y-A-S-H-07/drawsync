@@ -92,7 +92,7 @@ export default function HistoryPage() {
 
       pdf.addImage(dataURL, 'PNG', 0, 0, canvasWidth, canvasHeight);
 
-      const date = new Date(room.updatedAt).toISOString().slice(0, 10);
+      const date = new Date(room.createdAt).toISOString().slice(0, 10);
       pdf.save(`${room.roomName}-${date}.pdf`);
 
       // Cleanup
@@ -174,7 +174,7 @@ export default function HistoryPage() {
                               <User size={18} className="history-icon-user" />
                               <div className="history-info-content">
                                 <span className="history-info-label">Created by:</span>
-                                <span className="history-info-value">{room.host.fullName}</span>
+                                <span className="history-info-value">{room.hostEmail}</span>
                               </div>
                             </div>
 
@@ -183,7 +183,7 @@ export default function HistoryPage() {
                               <Calendar size={18} className="history-icon-calendar" />
                               <div className="history-info-content">
                                 <span className="history-info-label">Date:</span>
-                                <span className="history-info-value date">{new Date(room.updatedAt).toLocaleDateString()}</span>
+                                <span className="history-info-value date">{new Date(room.createdAt).toLocaleDateString()}</span>
                               </div>
                             </div>
 
@@ -224,7 +224,7 @@ export default function HistoryPage() {
                               <User size={18} className="history-icon-user" />
                               <div className="history-info-content">
                                 <span className="history-info-label">Created by:</span>
-                                <span className="history-info-value">{room.host.fullName}</span>
+                                <span className="history-info-value">{room.hostEmail}</span>
                               </div>
                             </div>
 
@@ -233,7 +233,7 @@ export default function HistoryPage() {
                               <Calendar size={18} className="history-icon-calendar" />
                               <div className="history-info-content">
                                 <span className="history-info-label">Date:</span>
-                                <span className="history-info-value date">{new Date(room.updatedAt).toLocaleDateString()}</span>
+                                <span className="history-info-value date">{new Date(room.createdAt).toLocaleDateString()}</span>
                               </div>
                             </div>
 
