@@ -444,15 +444,32 @@ function Documents({ roomId }) {
               borderRadius: "8px",
             }}
           >
-            <div>{doc.fileName}</div>
+            <a
+              href={doc.fileUrl}
+              target="_blank"
+              rel="noreferrer"
+              title={doc.fileName}
+              style={{
+                color: "#60a5fa",
+                textDecoration: "none",
+                fontWeight: "600",
+                display: "block",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {doc.fileName}
+            </a>
 
             <div
               style={{
                 fontSize: "12px",
                 opacity: 0.7,
+                marginTop: "5px",
               }}
             >
-              {doc.uploadedBy}
+              Uploaded by: {doc.uploadedBy}
             </div>
           </div>
         ))}
