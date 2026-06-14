@@ -178,6 +178,16 @@ function RoomPage() {
           >
             ChatBox
           </button>
+
+
+          <button
+            style={activeTab === "documents" ? styles.activeTab : styles.tab}
+            onClick={() => setActiveTab("documents")}
+          >
+            Documents
+          </button>
+
+
           <button
             style={activeTab === "image" ? styles.activeTab : styles.tab}
             onClick={() => setActiveTab("image")}
@@ -190,6 +200,9 @@ function RoomPage() {
           {activeTab === "members" && <Members members={members} hostName={hostName} handlePermission={handlePermission} currentUser={currentUser} permittedMember={permittedMember} />}
           {activeTab === "chat" && <ChatBox roomId={roomId} currentUser={currentUser} />}
           {activeTab === "image" && <SummaryGeneration roomId={roomId} setSummary={setSummary} summary={summary} />}
+          {activeTab === "documents" && (
+            <Documents roomId={roomId} />
+          )}
         </div>
       </div>
     </div>
@@ -344,6 +357,111 @@ function ChatBox({ roomId, currentUser }) {
     </div>
   );
 }
+function Documents({ roomId }) {
+  const [documents, setDocuments] = useState([]);
+  const [file, setFile] = useState(null);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      const { data } = await api.get(`/documents/${roomId}`);
+      setDocuments(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const uploadFile = async () => {
+
+  console.log("UPLOAD CLICKED");
+  console.log("FILE =", file);
+
+  if (!file) {
+    alert("No file selected");
+    return;
+  }
+
+  const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      console.log("Sending request...");
+
+      await api.post(
+        `/documents/upload/${roomId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      alert("PDF Uploaded");
+
+      setFile(null);
+      fetchDocuments();
+
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed");
+    }
+  };
+  return (
+    <div style={{ padding: "10px" }}>
+      <input
+        type="file"
+        accept=".pdf"
+        onChange={(e) => setFile(e.target.files[0])}
+      />
+
+      <button
+        onClick={uploadFile}
+        style={{
+          marginTop: "10px",
+          padding: "8px 12px",
+          background: "#2563eb",
+          border: "none",
+          borderRadius: "8px",
+          color: "white",
+          cursor: "pointer",
+        }}
+      >
+        Upload PDF
+      </button>
+
+      <div style={{ marginTop: "20px" }}>
+        {documents.map((doc) => (
+          <div
+            key={doc.id}
+            style={{
+              border: "1px solid #333",
+              padding: "10px",
+              marginBottom: "10px",
+              borderRadius: "8px",
+            }}
+          >
+            <div>{doc.fileName}</div>
+
+            <div
+              style={{
+                fontSize: "12px",
+                opacity: 0.7,
+              }}
+            >
+              {doc.uploadedBy}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 function SummaryGeneration({ roomId, setSummary, summary }) {
 
   const [loading, setLoading] = useState(false);
