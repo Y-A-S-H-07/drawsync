@@ -4,6 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.drawsync.backend.model.ChatMessage;
 import com.drawsync.backend.model.Document;
+import com.drawsync.backend.model.Room;
 import com.drawsync.backend.repository.ChatMessageRepository;
 import com.drawsync.backend.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.drawsync.backend.repository.RoomRepository;
 
 import java.util.List;
 
@@ -24,6 +27,8 @@ public class DocumentService {
     private final AiService aiService;
 
     private final ChatMessageRepository chatMessageRepository;
+
+    private final RoomRepository roomRepository;
 
 
 
@@ -117,8 +122,16 @@ public class DocumentService {
         List<ChatMessage> messages =
                 chatMessageRepository.findByRoomId(roomId);
 
+
         List<Document> documents =
                 documentRepository.findByRoomId(roomId);
+
+        Room room = roomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+
+
+        String boardData = room.getBoardData();
 
         if (documents.isEmpty()) {
             return "No documents found.";
@@ -149,16 +162,21 @@ Include:
 1. Important document information
 2. Important chat discussion
 3. Main topics discussed
+4. Whiteboard activity
 
 DOCUMENTS:
 %s
 
 CHAT:
 %s
+
+WHITEBOARD DATA:
+%s
 """
                 .formatted(
                         context.toString(),
-                        chatContext.toString()
+                        chatContext.toString(),
+                        boardData
                 );
 
         return aiService.ask(prompt);

@@ -271,6 +271,33 @@ function ChatBox({ roomId, currentUser }) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
 
+
+  useEffect(() => {
+
+    const loadMessages = async () => {
+
+      try {
+
+        const { data } =
+          await api.get(`/chat/${roomId}`);
+
+        const oldMessages = data.map(msg => ({
+          text: msg.message,
+          userName: msg.sender,
+          createdAt: msg.createdAt
+        }));
+
+        setMessages(oldMessages);
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadMessages();
+
+  }, [roomId]);
+
   useEffect(() => {
     const client = getStompClient();
     if (!client) return;
@@ -362,6 +389,7 @@ function ChatBox({ roomId, currentUser }) {
 function Documents({ roomId }) {
   const [documents, setDocuments] = useState([]);
   const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchDocuments();
@@ -375,6 +403,8 @@ function Documents({ roomId }) {
       console.error(err);
     }
   };
+
+  
 
   const uploadFile = async () => {
 
@@ -391,6 +421,8 @@ function Documents({ roomId }) {
 
     try {
       console.log("Sending request...");
+
+      setUploading(true);
 
       await api.post(
         `/documents/upload/${roomId}`,
@@ -410,6 +442,10 @@ function Documents({ roomId }) {
     } catch (err) {
       console.error(err);
       alert("Upload failed");
+    }finally {
+
+      setUploading(false);
+
     }
   };
   return (
@@ -432,7 +468,7 @@ function Documents({ roomId }) {
           cursor: "pointer",
         }}
       >
-        Upload PDF
+        {uploading ? "Uploading..." : "Upload PDF"}
       </button>
 
       <div style={{ marginTop: "20px" }}>
@@ -485,6 +521,15 @@ function AIAssistant({ roomId }) {
 
   const [messages, setMessages] = useState([]);
   const [question, setQuestion] = useState("");
+  const messagesEndRef = useRef(null);
+
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth"
+    });
+  }, [messages]);
+
 
   const sendQuestion = async () => {
 
@@ -504,6 +549,14 @@ function AIAssistant({ roomId }) {
 
     try {
 
+      setMessages(prev => [
+        ...prev,
+        {
+          type: "ai",
+          text: "Thinking..."
+        }
+      ]);
+
       const { data } = await api.post(
         `/documents/ask/${roomId}`,
         {
@@ -512,7 +565,7 @@ function AIAssistant({ roomId }) {
       );
 
       setMessages(prev => [
-        ...prev,
+        ...prev.slice(0, -1), // remove Thinking...
         {
           type: "ai",
           text: data
@@ -527,7 +580,24 @@ function AIAssistant({ roomId }) {
   return (
     <div style={chatStyles.wrapper}>
       <button
+        style={{
+          marginBottom: "10px",
+          padding: "10px",
+          borderRadius: "8px",
+          border: "none",
+          background: "#2563eb",
+          color: "white",
+          cursor: "pointer"
+        }}
         onClick={async () => {
+
+          setMessages(prev => [
+            ...prev,
+            {
+              type: "user",
+              text: "Summarize this room"
+            }
+          ]);
 
           const { data } =
             await api.post(`/documents/summary/${roomId}`);
@@ -539,7 +609,6 @@ function AIAssistant({ roomId }) {
               text: data
             }
           ]);
-
         }}
       >
         Summarize Room
@@ -569,6 +638,7 @@ function AIAssistant({ roomId }) {
           </div>
 
         ))}
+        <div ref={messagesEndRef} />
 
       </div>
 
