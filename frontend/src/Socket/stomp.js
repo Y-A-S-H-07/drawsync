@@ -13,7 +13,7 @@ export const connectSocket = (onConnected) => {
 
   console.log(" Creating fresh STOMP connection instance...");
   stompClient = new Client({
-    brokerURL: "ws://localhost:8080/ws",
+    brokerURL: "https://drawsync-us5j.onrender.com/ws",
     reconnectDelay: 5000,
     connectHeaders: {
       Authorization: token ? `Bearer ${token}` : "",

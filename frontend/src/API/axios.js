@@ -1,9 +1,9 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.PROD
-    ? import.meta.env.VITE_SERVER_URL
-    : 'http://localhost:8080',
+  baseURL:
+    import.meta.env.VITE_SERVER_URL ||
+    "https://drawsync-us5j.onrender.com",
 });
 
 // Attach token to every request if available
