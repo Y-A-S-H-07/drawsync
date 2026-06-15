@@ -10,8 +10,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+
+import com.drawsync.backend.model.ChatMessage;
+import com.drawsync.backend.repository.ChatMessageRepository;
+
+
 @Controller
 public class SocketController {
+
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
@@ -122,11 +130,30 @@ public class SocketController {
 
     @MessageMapping("/chat")
     public void handleChatMessage(java.util.Map<String, Object> payload) {
-        String roomId = (String) payload.get("roomId");
-        Object messageData = payload.get("message"); // Extracts text, userName, userId
 
-        System.out.println("" +
-                "Broad0casting message to room: " + roomId);
+        System.out.println("CHAT RECEIVED: " + payload);
+
+        String roomId = (String) payload.get("roomId");
+
+        java.util.Map<String, Object> messageData =
+                (java.util.Map<String, Object>) payload.get("message");
+
+        String text =
+                String.valueOf(messageData.get("text"));
+
+        String userName =
+                String.valueOf(messageData.get("userName"));
+
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setRoomId(roomId);
+        chatMessage.setSender(userName);
+        chatMessage.setMessage(text);
+        chatMessage.setCreatedAt(
+                java.time.LocalDateTime.now()
+        );
+
+        chatMessageRepository.save(chatMessage);
+        System.out.println("CHAT SAVED");
 
         messagingTemplate.convertAndSend(
                 "/topic/chat/" + roomId,

@@ -2,7 +2,9 @@ package com.drawsync.backend.service;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.drawsync.backend.model.ChatMessage;
 import com.drawsync.backend.model.Document;
+import com.drawsync.backend.repository.ChatMessageRepository;
 import com.drawsync.backend.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.Loader;
@@ -19,6 +21,12 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final Cloudinary cloudinary;
+    private final AiService aiService;
+
+    private final ChatMessageRepository chatMessageRepository;
+
+
+
 
     public Document uploadPdf(
             String roomId,
@@ -74,4 +82,88 @@ public class DocumentService {
     public List<Document> getDocumentsByRoom(String roomId) {
         return documentRepository.findByRoomId(roomId);
     }
+
+    public String askQuestion(String roomId, String question) {
+
+        List<Document> documents = documentRepository.findByRoomId(roomId);
+
+        if (documents.isEmpty()) {
+            return "No documents found in this room.";
+        }
+
+        StringBuilder context = new StringBuilder();
+
+        for (Document document : documents) {
+            context.append(document.getContent())
+                    .append("\n\n");
+        }
+
+        String prompt = """
+            Answer the question only using the document content below.
+
+            DOCUMENT:
+            %s
+
+            QUESTION:
+            %s
+            """
+                .formatted(context.toString(), question);
+
+        return aiService.ask(prompt);
+    }
+
+    public String generateSummary(String roomId) {
+
+        List<ChatMessage> messages =
+                chatMessageRepository.findByRoomId(roomId);
+
+        List<Document> documents =
+                documentRepository.findByRoomId(roomId);
+
+        if (documents.isEmpty()) {
+            return "No documents found.";
+        }
+
+        StringBuilder context = new StringBuilder();
+
+        for (Document document : documents) {
+            context.append(document.getContent())
+                    .append("\n\n");
+        }
+
+        StringBuilder chatContext = new StringBuilder();
+
+        for (ChatMessage message : messages) {
+
+            chatContext.append(message.getSender())
+                    .append(": ")
+                    .append(message.getMessage())
+                    .append("\n");
+        }
+
+        String prompt = """
+Summarize this collaboration session.
+
+Include:
+
+1. Important document information
+2. Important chat discussion
+3. Main topics discussed
+
+DOCUMENTS:
+%s
+
+CHAT:
+%s
+"""
+                .formatted(
+                        context.toString(),
+                        chatContext.toString()
+                );
+
+        return aiService.ask(prompt);
+    }
+
+
+
 }

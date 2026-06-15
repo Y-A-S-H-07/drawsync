@@ -16,7 +16,7 @@ function RoomPage() {
   const [hostName, setHostName] = useState("");
   const [summary, setSummary] = useState('');
   const [permittedMember, setPermittedMember] = useState([]);
-
+  
   useEffect(() => {
     if (!roomId || hasJoined.current) return;
 
@@ -189,17 +189,19 @@ function RoomPage() {
 
 
           <button
-            style={activeTab === "image" ? styles.activeTab : styles.tab}
-            onClick={() => setActiveTab("image")}
+            style={activeTab === "ai" ? styles.activeTab : styles.tab}
+            onClick={() => setActiveTab("ai")}
           >
-            Summary Generation
+            AI
           </button>
         </div>
 
         <div style={styles.tabContent}>
           {activeTab === "members" && <Members members={members} hostName={hostName} handlePermission={handlePermission} currentUser={currentUser} permittedMember={permittedMember} />}
           {activeTab === "chat" && <ChatBox roomId={roomId} currentUser={currentUser} />}
-          {activeTab === "image" && <SummaryGeneration roomId={roomId} setSummary={setSummary} summary={summary} />}
+          {activeTab === "ai" &&
+            <AIAssistant roomId={roomId} />
+          }
           {activeTab === "documents" && (
             <Documents roomId={roomId} />
           )}
@@ -479,66 +481,117 @@ function Documents({ roomId }) {
 }
 
 
-function SummaryGeneration({ roomId, setSummary, summary }) {
+function AIAssistant({ roomId }) {
 
-  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [question, setQuestion] = useState("");
 
-  const handleOnClick = async () => {
-    setLoading(true);
+  const sendQuestion = async () => {
+
+    if (!question.trim()) return;
+
+    const userQuestion = question;
+
+    setMessages(prev => [
+      ...prev,
+      {
+        type: "user",
+        text: userQuestion
+      }
+    ]);
+
+    setQuestion("");
+
     try {
-      const { data } = await api.post(`/summary/${roomId}`);
-      setSummary(data.output);
+
+      const { data } = await api.post(
+        `/documents/ask/${roomId}`,
+        {
+          question: userQuestion
+        }
+      );
+
+      setMessages(prev => [
+        ...prev,
+        {
+          type: "ai",
+          text: data
+        }
+      ]);
+
     } catch (err) {
-      toast.error(err.message?.data?.msg || "something went wrong");
-    } finally {
-      setLoading(false);
+      console.error(err);
     }
-  }
+  };
 
   return (
-    <div style={{ padding: "20px", textAlign: "center", opacity: 0.9 }}>
+    <div style={chatStyles.wrapper}>
+      <button
+        onClick={async () => {
 
-      <style>{`
-        .summary-output pre {
-          white-space: pre-wrap;
-          background: #0d0d0d;
-          color: #e8e8e8;
-          padding: 16px;
-          border-radius: 8px;
-          font-family: "Fira Code", "Consolas", "Menlo", monospace;
-          font-size: 14px;
-          line-height: 1.55;
-          text-align: left;
-          border: 1px solid #333;
-          box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-          overflow-x: auto;
-        }
-      `}</style>
+          const { data } =
+            await api.post(`/documents/summary/${roomId}`);
 
-      <div className="flex justify-around items-center">
-        <button
-          className="text-white border border-white hover:bg-white hover:text-black transition-all shadow-md shadow-white rounded"
-          style={{ padding: "10px 20px" }}
-          onClick={handleOnClick}
-          disabled={loading}
-        >
-          {loading ? "Generating..." : "Generate Summary!"}
-        </button>
-        {
-          summary &&
-          <button onClick={() => navigator.clipboard.writeText(summary)} className="text-2xl rounded hover:bg-white relative after:content-['Copy Summary'] after:absolute after:bottom-50 after:w-50 after:h-50 after:bg-amber-300 " style={{ padding: "5px 10px" }}>
-            📋
-          </button>
-        }
+          setMessages(prev => [
+            ...prev,
+            {
+              type: "ai",
+              text: data
+            }
+          ]);
+
+        }}
+      >
+        Summarize Room
+      </button>
+
+      <div style={chatStyles.messages}>
+
+        {messages.map((msg, index) => (
+
+          <div
+            key={index}
+            style={{
+              ...chatStyles.messageCard,
+              background:
+                msg.type === "user"
+                  ? "#1e3a8a"
+                  : "#111827"
+            }}
+          >
+            <div style={chatStyles.userName}>
+              {msg.type === "user" ? "You" : "AI"}
+            </div>
+
+            <div style={chatStyles.messageText}>
+              {msg.text}
+            </div>
+          </div>
+
+        ))}
 
       </div>
-      {
-        summary && (
-          <div className="summary-output" style={{ marginTop: "20px" }}>
-            <div dangerouslySetInnerHTML={{ __html: summary }} />
-          </div>
-        )
-      }
+
+      <div style={chatStyles.inputBox}>
+
+        <input
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="Ask AI..."
+          style={chatStyles.input}
+          onKeyDown={(e) =>
+            e.key === "Enter" && sendQuestion()
+          }
+        />
+
+        <button
+          style={chatStyles.sendBtn}
+          onClick={sendQuestion}
+        >
+          ➤
+        </button>
+
+      </div>
 
     </div>
   );
