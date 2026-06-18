@@ -11,7 +11,6 @@ import org.springframework.web.socket.config.annotation.*;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    // ✅ Inject your dedicated security interceptor component
     @Autowired
     private WebSocketChannelInterceptor webSocketChannelInterceptor;
 
@@ -28,7 +27,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        // ✅ Swap out the messy inline interceptor for your robust RBAC component shield!
         registration.interceptors(webSocketChannelInterceptor);
     }
 }

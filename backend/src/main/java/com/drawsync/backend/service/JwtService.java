@@ -22,7 +22,6 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // ✅ Generates token with encapsulated string roles
     public String generateToken(String email, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
@@ -36,7 +35,6 @@ public class JwtService {
                 .compact();
     }
 
-    // ✅ FIXED: Uses version-compatible syntax directly without calling .build()
     public String extractEmail(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(getSigningKey())
@@ -45,7 +43,6 @@ public class JwtService {
         return claims.getSubject();
     }
 
-    // ✅ FIXED: Uses version-compatible syntax directly without calling .build()
     public String extractRole(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(getSigningKey())

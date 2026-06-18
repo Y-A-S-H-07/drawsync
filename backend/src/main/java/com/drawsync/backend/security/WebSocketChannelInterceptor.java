@@ -62,7 +62,6 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
                     boolean isViewer = authToken.getAuthorities().stream()
                             .anyMatch(a -> a.getAuthority().equals("ROLE_VIEWER"));
 
-                    // ✅ If a client is a read-only VIEWER, block them from publishing drawings or text chat!
                     if (isViewer && destination != null && (destination.startsWith("/app/board") || destination.startsWith("/app/chat"))) {
                         System.err.println("❌ RBAC Violation: Read-only user tried to broadcast modifications!");
                         throw new AccessDeniedException("Access Denied: Read-only viewers cannot modify the workspace canvas.");
